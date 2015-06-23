@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+  <head>
+    <title>聊天室</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <div id="container">
+        <div>
+          <div>Room Name: <span id="roomName">TEST</span></div>
+        </div>
+        <div id="wrapper1">
+            <ul id="messages"></ul>
+        </div>
+        <div id="wrapper2">
+            <ul id="room">
+                <li>輸入 /join xxxx 創建或加入房間</li>
+                <li>輸入 /name xxxx 更改暱稱</li>
+            </ul>
+        </div>
+        <div>
+            <form action="">
+              <input id="m" autocomplete="off" />
+              <button>Send</button>
+            </form>
+        </div>
+    </div>
+
+    <!--socket.io.js-->
+    <script src="/socket.io/socket.io.js"></script>
+    <!--jQuery-->
+    <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+    <script>
+        // socket object
+        // socket 對象
+        var socket = io();
+
+        // display message in html
+        // 在瀏覽器里顯示信息
+        function showMsg(msg) {
+            $('#messages').append($('<li>').text(msg));
+        }
+
+        //dispatch command to different event 針對不同發送的信息進行命令分發
+        // /join xxxx --> join a room xxx 創建或加入新聊天室xxx
+        // /name xxx --> change the name in chatroom 暱稱改為xxx
+        function dispatchCommand(msg) {
+
+            if (msg.substr(0,1) =='/') {
+
+                msg = msg.substr(1,msg.length);
+                var msgArr = msg.split(' ');
+
+                if (msgArr[0] === 'join') {
+                    socket.emit('change room', msgArr[1]);
+                }
+                else if (msgArr[0] === 'name') {
+                    socket.emit('change name', msgArr[1]);
+                }
+
+            }
+            else {
+                socket.emit('chat message', msg);
+
+            }
+        }
+
+        // 一旦表單提交，它會檢測輸入文本並跟本文本信息分發不同命令
+        $('form').submit(function() {
+
+            var msg = $('#m').val();
+            dispatchCommand(msg)
+            
+            $('#m').val('');
+            return false;
+        });
+
+        //監聽'chat message'事件。一旦事件觸發发(emit)，它將會在瀏覽器上顯示信息
+        socket.on('chat message', function(msg){
+            showMsg(msg);
+        });
+
+        //監聽'sys message'事件。一旦事件觸發发(emit)，它將會在瀏覽器上顯示信息
+        socket.on('sys message', function(msg){
+            showMsg(msg);
+        });
+
+        //監聽'new user'事件。一旦事件觸發发(emit)，它將會在瀏覽器上顯示信息
+        socket.on('new user', function(msg) {
+            showMsg(msg);
+        });
+
+        //監聽'exit user'事件。一旦事件觸發发(emit)，它將會在瀏覽器上顯示信息
+        socket.on('exit user', function(msg) {
+            showMsg(msg);
+        });
+
+        //監聽'change room name'事件。一旦事件觸發发(emit)，它將會在瀏覽器上顯示信息        
+        socket.on('change room name', function(msg) {
+          $('#roomName').text(msg);
+        });
+
+    </script>
+  </body>
+</html>
